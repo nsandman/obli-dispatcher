@@ -1,0 +1,4 @@
+# List the git repos of all the modules you would like installed
+# then run install_modules.sh
+
+# git://github.com/nsandman09/obli-python.git
