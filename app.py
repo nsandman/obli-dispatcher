@@ -18,7 +18,9 @@ sio.attach(app)
 @sio.event
 async def event(sid, params):
     loop = asyncio.get_event_loop()
-    statement = "output = loop.run_until_complete({module}.{name}(Interface('{sid}', '{module}')"
+
+    interface = Interface(sid, params["module"])
+    statement = "output = loop.run_until_complete({module}.{name}(interface"
     try:
         if params["data"]:
             statement += ', """{data}"""'
@@ -83,7 +85,7 @@ class Interface():
             "event": event,
             "data":  data,
             "me": self.name
-        })
+        }, room=self.sid)
 
 if __name__ == "__main__":
     modules_dir = path.join(getcwd(), "modules")
