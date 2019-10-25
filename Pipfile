@@ -6,4 +6,3 @@ name = "pypi"
 [packages]
 python-socketio = "*"
 sanic = "*"
-nest_asyncio = "*"

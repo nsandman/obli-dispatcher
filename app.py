@@ -1,10 +1,7 @@
-import sys
 import json
 import socketio
 
-import nest_asyncio
-import asyncio
-
+from sys import modules, path as syspath
 from sanic import Sanic
 from os import getenv, listdir, path, getcwd
 
@@ -17,21 +14,16 @@ sio.attach(app)
 
 @sio.event
 async def event(sid, params):
-    loop = asyncio.get_event_loop()
+    output = None
 
     interface = Interface(sid, params["module"])
-    statement = "output = loop.run_until_complete({module}.{name}(interface"
+    module_method = getattr(modules[params["module"]], params["name"])
+
     try:
-        if params["data"]:
-            statement += ', """{data}"""'
-    except:
-        pass
+        output = await module_method(interface, params["data"])
+    except TypeError:
+        output = await module_method(interface)
 
-    statement = (statement + "))").format(**params,sid=sid)
-    exec(statement, globals())
-
-    if isinstance(output, (dict, list)):
-        return json.dumps(output)
     return output
 
 connected = []
@@ -89,19 +81,12 @@ class Interface():
 
 if __name__ == "__main__":
     modules_dir = path.join(getcwd(), "modules")
-    sys.path.append(modules_dir)
+    syspath.append(modules_dir)
+
     for module in listdir(modules_dir):
         if path.isdir(path.join(modules_dir, module)):
             print("Loading module", module)
-            exec("import " + module)
-
-    # disable uvloop and replace the default
-    # event loop with a normal one so we 
-    # can nest coroutines
-    asyncio.set_event_loop_policy(None)
-    loop = asyncio.new_event_loop()
-    nest_asyncio.apply(loop)
-    asyncio.set_event_loop(loop)
+            __import__(module)
 
     PORT = getenv("PORT", 8000)
     app.run(host="0.0.0.0", port=PORT)
